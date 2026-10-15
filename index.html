@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b0d11">
+<title>LAST LINE : 좀비 방어선</title>
+<style>
+:root{--red:#ff4d5f;--gold:#ffd178;--mint:#a8e5b6;--bg:#0b0d11;--stroke:rgba(255,255,255,.12)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;height:100%;overflow:hidden;background:#090a0e;color:#f4f2ec;font-family:system-ui,-apple-system,"Malgun Gothic","Apple SD Gothic Neo",sans-serif}
+body{display:flex;align-items:center;justify-content:center}
+#game{position:relative;width:min(100vw,470px);height:100dvh;max-height:930px;overflow:hidden;background:#101419;isolation:isolate;touch-action:none;box-shadow:0 0 100px rgba(0,0,0,.8)}
+#game:before{content:"";position:absolute;inset:0;border-left:1px solid #343038;border-right:1px solid #343038;pointer-events:none;z-index:10}
+canvas{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none}
+#vignette{position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 43%,transparent 28%,rgba(5,5,7,.2) 74%,rgba(5,5,7,.72) 120%)}
+#hud{z-index:3;position:absolute;top:0;left:0;right:0;pointer-events:none;padding:calc(18px + env(safe-area-inset-top,0px)) 17px 0}
+.brandline{display:flex;align-items:center;justify-content:space-between;gap:8px}.brand{font-size:10px;color:#a6aab1;font-weight:950;letter-spacing:.26em}.state{font-size:10px;color:#ff9ba1;letter-spacing:.12em;background:#31171e;padding:6px 9px;border:1px solid #7c2936;border-radius:5px;font-weight:800}
+.stats{display:grid;grid-template-columns:1.2fr .82fr .82fr;gap:7px;margin-top:11px}.stat{background:rgba(12,14,19,.89);border:1px solid rgba(255,255,255,.13);border-radius:10px;padding:10px 10px 9px;box-shadow:0 8px 24px rgba(0,0,0,.22)}.stat label{display:block;font-size:10px;font-weight:850;letter-spacing:.06em;color:#9ca0a5;margin-bottom:4px}.stat strong{font-size:19px;font-weight:950;line-height:1.1;letter-spacing:-.035em}.stat.hp strong{color:#fff}.stat.coin strong{color:var(--gold)}.stat.wave strong{color:#ff808b}.health-track,.wave-track{height:4px;background:#332b31;border-radius:9px;overflow:hidden;margin-top:9px}.health-fill{height:100%;background:linear-gradient(90deg,#b3263d,#ff6674);width:100%;transition:width .2s}.wave-track{margin-top:8px;height:3px;background:#282e32}.wave-fill{width:0;height:100%;background:#e7a96e;transition:width .3s}
+.topinfo{display:flex;justify-content:space-between;margin-top:9px;font-size:10px;font-weight:800;letter-spacing:.05em;color:#b7b6b7;text-shadow:0 1px 5px #000}.topinfo b{color:#f9ded4}
+#bottom{position:absolute;bottom:0;left:0;right:0;z-index:4;padding:13px 15px calc(15px + env(safe-area-inset-bottom,0px));background:linear-gradient(0deg,#090b10 82%,rgba(9,11,16,.97) 91%,rgba(9,11,16,0) 100%);box-shadow:0 -20px 35px rgba(7,9,10,.22)}
+.equip{min-height:35px;display:flex;align-items:center;gap:9px;padding:3px 3px 12px}.weapon-symbol{display:grid;place-items:center;background:#322528;border:1px solid #a44953;color:#ffc9bf;width:34px;height:34px;border-radius:8px;font-size:18px;flex-shrink:0}.equip-txt{flex:1;min-width:0}.equip-txt b{display:block;font-size:12px;font-weight:900}.equip-txt small{display:block;margin-top:2px;font-size:10px;color:#a7a8aa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mute{color:#a9a9ae;min-width:32px;border-radius:8px;font-size:15px;background:transparent;border:1px solid #3b3d42;padding:6px;cursor:pointer}
+.actions{display:grid;grid-template-columns:1fr 1fr 40px;gap:8px}.act{cursor:pointer;min-height:61px;border:1px solid #7b3440;border-radius:10px;color:#fef1ee;background:linear-gradient(#562a32,#2e1b23);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:10px 12px;gap:3px;position:relative;overflow:hidden;touch-action:manipulation}.act:after{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:rgba(255,255,255,.13)}.act.gold{border-color:#886034;background:linear-gradient(#64462a,#372b20)}.act b{font-size:13px;font-weight:950;white-space:nowrap}.act small{font-size:11px;color:#ffbdc3;font-weight:850}.act.gold small{color:#ffe0a6}.act:active{filter:brightness(1.32);transform:scale(.985)}.act:disabled{opacity:.46;filter:grayscale(.5);cursor:default}.act.icononly{align-items:center;padding:0;background:#23252b;border-color:#4a4d56;font-size:21px}
+.hint{font-size:10px;color:#9e9ba1;text-align:center;margin-top:9px;letter-spacing:.02em}
+#toast{position:absolute;z-index:6;top:28%;left:50%;transform:translate(-50%,-15px);min-width:180px;max-width:90%;padding:13px 17px;text-align:center;border:1px solid rgba(255,255,255,.26);border-radius:12px;background:rgba(16,18,22,.93);box-shadow:0 14px 38px rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
+#toast.show{opacity:1;transform:translate(-50%,0)}#toast strong{display:block;font-size:15px;font-weight:950;color:#fff}#toast small{font-size:11px;color:#cdc9c9;display:block;margin-top:4px}
+#overlay{position:absolute;inset:0;z-index:8;display:flex;justify-content:center;align-items:center;padding:23px;background:linear-gradient(180deg,rgba(6,7,10,.61),rgba(6,7,10,.77) 42%,rgba(6,7,10,.91));transition:opacity .2s}.modal{width:100%;max-width:370px;border-radius:18px;padding:28px 24px 23px;background:linear-gradient(140deg,rgba(33,27,32,.97),rgba(15,17,22,.97));border:1px solid #6b3641;box-shadow:0 18px 75px #000c;position:relative;overflow:hidden;text-align:center}.modal:before{content:"";position:absolute;left:-30px;right:-30px;top:-85px;height:170px;background:radial-gradient(ellipse,#a02c3c33,transparent 66%);pointer-events:none}.eyebrow{font-size:11px;font-weight:950;letter-spacing:.26em;color:#ff9eaa;margin-bottom:10px}.modal h1{position:relative;line-height:.98;font-size:clamp(43px,12.5vw,57px);font-weight:1000;letter-spacing:-.07em;margin:0 0 13px;font-stretch:condensed;color:#f5efe8;text-shadow:2px 4px 0 rgba(128,29,41,.5)}.modal h1 em{font-style:normal;color:var(--red)}.sub{font-size:14px;color:#dad3d0;font-weight:850;margin:0 0 21px}.story{font-size:12px;line-height:1.8;text-align:left;color:#c6c1bf;background:#17191f;border:1px solid #36323a;border-radius:9px;padding:13px 16px;margin:0 0 22px}.story b{color:#fff}.primary{width:100%;border:0;background:linear-gradient(100deg,#ff5467,#bb314b);box-shadow:0 8px 25px #b822443c;color:#fff;font-size:16px;font-weight:950;padding:16px;border-radius:10px;cursor:pointer}.primary:active{filter:brightness(1.2)}.footnote{font-size:10px;letter-spacing:.09em;color:#84848a;margin-top:16px}.hidden{display:none!important}#overlay.hidden{opacity:0;pointer-events:none}
+#pauseCover{position:absolute;inset:0;z-index:7;background:rgba(6,7,11,.7);display:none;place-items:center;text-align:center}#pauseCover.show{display:grid}#pauseCover h2{font-size:28px;margin:0 0 9px}#pauseCover p{font-size:13px;color:#d8cfcf}#resumeBtn{border:1px solid #a74756;border-radius:9px;padding:12px 27px;background:#5a2834;color:white;font-weight:900;font-size:14px}
+@media(max-height:630px){#hud{padding-top:10px}.stat{padding:7px 9px}.stats{margin-top:7px}.stat strong{font-size:17px}#bottom{padding-top:8px;padding-bottom:9px}.act{min-height:50px}.equip{padding-bottom:5px}.hint{margin-top:5px}}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="world" aria-label="좀비가 위에서 아래로 몰려오고 플레이어가 자동 사격하는 게임 화면"></canvas><div id="vignette"></div>
+  <div id="hud">
+    <div class="brandline"><div class="brand">☣ LAST LINE / OUTBREAK 07</div><div class="state" id="status">● 생존 작전</div></div>
+    <div class="stats">
+      <div class="stat hp"><label>생존 체력</label><strong id="hpText">100 / 100</strong><div class="health-track"><div class="health-fill" id="hpFill"></div></div></div>
+      <div class="stat coin"><label>보유 코인</label><strong id="coinText">140</strong><div class="wave-track"><div class="wave-fill" style="background:#ffd178;width:100%"></div></div></div>
+      <div class="stat wave"><label>진행 웨이브</label><strong id="waveText">01</strong><div class="wave-track"><div class="wave-fill" id="waveFill"></div></div></div>
+    </div>
+    <div class="topinfo"><span id="killText">처치 0 · 생존 00:00</span><span id="enemiesText">남은 적 <b>12</b></span></div>
+  </div>
+  <div id="toast"><strong id="toastTitle">알림</strong><small id="toastDesc"></small></div>
+  <div id="bottom">
+    <div class="equip"><div class="weapon-symbol" id="weaponSymbol">⌖</div><div class="equip-txt"><b id="weaponName">녹슨 권총 Lv.1</b><small id="weaponInfo">자동 사격 · 좌우로 움직여 탄도를 조정</small></div><button class="mute" id="soundBtn" aria-label="사운드 켜기 또는 끄기">♪̸</button></div>
+    <div class="actions"><button class="act" id="weaponBtn"><b>▣ 랜덤 무기</b><small id="weaponCost">110 코인</small></button><button class="act gold" id="allyBtn"><b>✦ 동료 모집</b><small id="allyCost">85 코인</small></button><button class="act icononly" id="pauseBtn" aria-label="일시정지">Ⅱ</button></div>
+    <div class="hint">화면을 누르고 좌우로 움직이세요 · 공격은 자동</div>
+  </div>
+  <div id="pauseCover"><div><h2>일시정지</h2><p>방어선은 아직 무너지지 않았습니다.</p><button id="resumeBtn">계속하기 ▶</button></div></div>
+  <div id="overlay"><div class="modal"><div class="eyebrow" id="modalEyebrow">MOBILE SURVIVAL DEMO</div><h1 id="modalTitle">LAST<br><em>LINE</em></h1><p class="sub" id="modalSub">6시 방향, 최후의 방어선</p><div class="story" id="modalStory"><b>12시:</b> 좀비 떼가 남쪽으로 진격합니다.<br><b>6시:</b> 생존자가 자동으로 위쪽을 사격합니다.<br><b>보급:</b> 무기를 랜덤으로 얻고 코인으로 동료를 모집하세요.<br><b>조작:</b> 터치/드래그 또는 ← → 방향키.</div><button class="primary" id="startBtn">방어 시작 →</button><div class="footnote">OFFLINE · SINGLE PLAYER · PROTOTYPE</div></div></div>
+</div>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);const canvas=$('world'),ctx=canvas.getContext('2d',{alpha:false});
+const shell=$('game'),ui={hp:$('hpText'),hpFill:$('hpFill'),coins:$('coinText'),wave:$('waveText'),waveFill:$('waveFill'),kills:$('killText'),enemies:$('enemiesText'),weapon:$('weaponName'),winfo:$('weaponInfo'),wicon:$('weaponSymbol'),wcost:$('weaponCost'),acost:$('allyCost'),wbtn:$('weaponBtn'),abtn:$('allyBtn'),status:$('status'),toast:$('toast'),toastTitle:$('toastTitle'),toastDesc:$('toastDesc'),overlay:$('overlay'),pauseCover:$('pauseCover')};
+const TAU=Math.PI*2,rand=(a,b)=>a+Math.random()*(b-a),clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+let W=400,H=800,dpr=1,playerY=550,mode='menu',paused=false,sound=false,audio=null,time=0,last=performance.now(),spawnClock=0,wave=1,waveCount=0,waveSpawn=0,nextWave=0,kills=0,coins=140,hp=100,shake=0,shotCounter=0,toastTimer=0,decor=[],splats=[],enemies=[],bullets=[],particles=[],drops=[],allies=[];
+let player={x:200,targetX:200,cooldown:0,blink:0},weapon={id:'pistol',level:1},wcost=110,acost=85;
+const WEAPONS={
+  pistol:{name:'녹슨 권총',icon:'⌖',desc:'균형 잡힌 기본 사격',damage:27,rate:.39,speed:760,pellets:1,spread:0,penetrate:0,color:'#ffd7ac',rarity:'일반'},
+  smg:{name:'찢어진 기관단총',icon:'▤',desc:'탄환을 빠르게 퍼붓는 무기',damage:13,rate:.12,speed:870,pellets:1,spread:.12,penetrate:0,color:'#e9f4b4',rarity:'일반'},
+  shotgun:{name:'도살자 산탄총',icon:'⋈',desc:'근거리 5발 동시 발사',damage:22,rate:.64,speed:700,pellets:5,spread:.37,penetrate:0,color:'#ffb176',rarity:'희귀'},
+  rifle:{name:'관통형 저격총',icon:'⊕',desc:'강한 관통탄을 발사',damage:65,rate:.63,speed:1100,pellets:1,spread:0,penetrate:2,color:'#91dafa',rarity:'희귀'},
+  minigun:{name:'광기의 미니건',icon:'▥',desc:'초고속 연사',damage:15,rate:.072,speed:900,pellets:1,spread:.16,penetrate:0,color:'#e2d6ff',rarity:'영웅'},
+  rail:{name:'종말의 레일건',icon:'✧',desc:'전열을 꿰뚫는 파괴광선',damage:145,rate:.72,speed:1380,pellets:1,spread:0,penetrate:5,color:'#ff6e94',rarity:'전설'}
+};
+const ALLIES={
+  scout:{name:'정찰병',desc:'빠른 자동 사격',color:'#88c8c9',rate:.47,damage:20,icon:'⌖'},
+  hunter:{name:'사냥꾼',desc:'강력한 단발 사격',color:'#f2b96d',rate:.82,damage:44,icon:'◈'},
+  medic:{name:'의무병',desc:'주기적으로 체력 회복',color:'#a7e0b0',rate:2.7,damage:14,icon:'✚'},
+  pyro:{name:'화염병 투척수',desc:'폭발 범위 공격',color:'#ff8975',rate:1.35,damage:30,icon:'♨'}
+};
+function resize(){const box=shell.getBoundingClientRect();W=box.width;H=box.height;dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);playerY=H-194;if(!player.x||player.x>W-23){player.x=W/2;player.targetX=W/2}genDecor()}
+function genDecor(){decor=[];for(let i=0;i<47;i++){decor.push({x:rand(42,W-42),y:rand(5,H),size:rand(2,13),rotation:rand(-.8,.8),type:Math.floor(rand(0,4))})}}
+window.addEventListener('resize',resize);resize();
+function reset(){time=0;spawnClock=.2;wave=1;waveCount=14;waveSpawn=0;nextWave=0;kills=0;coins=140;hp=100;shake=0;shotCounter=0;toastTimer=0;enemies=[];bullets=[];particles=[];drops=[];allies=[];splats=[];player={x:W/2,targetX:W/2,cooldown:0,blink:0};weapon={id:'pistol',level:1};wcost=110;acost=85;paused=false;ui.pauseCover.classList.remove('show');mode='play';ui.overlay.classList.add('hidden');sync()}
+function sync(){ui.hp.textContent=Math.ceil(hp)+' / 100';ui.hpFill.style.width=clamp(hp,0,100)+'%';ui.coins.textContent=coins.toLocaleString('ko-KR');ui.wave.textContent=String(wave).padStart(2,'0');ui.waveFill.style.width=((waveSpawn/waveCount)*100||0)+'%';ui.kills.textContent=`처치 ${kills} · 생존 ${String(Math.floor(time/60)).padStart(2,'0')}:${String(Math.floor(time%60)).padStart(2,'0')}`;ui.enemies.innerHTML=`남은 적 <b>${Math.max(0,waveCount-waveSpawn+enemies.length)}</b>`;ui.weapon.textContent=WEAPONS[weapon.id].name+' Lv.'+weapon.level;ui.winfo.textContent=WEAPONS[weapon.id].rarity+' · '+WEAPONS[weapon.id].desc;ui.wicon.textContent=WEAPONS[weapon.id].icon;ui.wcost.textContent=wcost+' 코인';ui.acost.textContent=allies.length>=4?'최대 4명':acost+' 코인';ui.wbtn.disabled=coins<wcost;ui.abtn.disabled=coins<acost||allies.length>=4;ui.status.textContent=nextWave>0?'● 재정비 시간':'● 생존 작전'}
+function toast(title,desc,color='#fff'){ui.toastTitle.textContent=title;ui.toastTitle.style.color=color;ui.toastDesc.textContent=desc;ui.toast.classList.add('show');toastTimer=2.7}
+function pickWeapon(fromDrop=false){if(mode!=='play'||paused)return;if(!fromDrop){if(coins<wcost)return;coins-=wcost;wcost+=30}let n=Math.random(),id=n<.28?'pistol':n<.53?'smg':n<.72?'shotgun':n<.87?'rifle':n<.97?'minigun':'rail';let next=WEAPONS[id],same=weapon.id===id;if(same)weapon.level++;else weapon={id,level:1};burst(player.x,playerY-20,next.color,25,1.1);toast(same?'무기 강화 성공!':'새로운 무기 획득!',next.name+(same?' Lv.'+weapon.level:' · '+next.rarity),next.color);tone(same?480:640,.12,'triangle');sync()}
+function recruit(){if(mode!=='play'||paused||coins<acost||allies.length>=4)return;coins-=acost;acost+=60;let ids=Object.keys(ALLIES),id=ids[Math.floor(Math.random()*ids.length)];allies.push({id,cooldown:rand(.1,.8),phase:rand(0,TAU)});burst(player.x,playerY-10,ALLIES[id].color,22,.85);toast('동료가 합류했습니다!',ALLIES[id].name+' · '+ALLIES[id].desc,ALLIES[id].color);tone(650,.1,'sine');sync()}
+ui.wbtn.addEventListener('click',()=>pickWeapon(false));ui.abtn.addEventListener('click',recruit);
+$('startBtn').addEventListener('click',()=>reset());$('pauseBtn').addEventListener('click',()=>togglePause());$('resumeBtn').addEventListener('click',()=>togglePause());
+function togglePause(){if(mode!=='play')return;paused=!paused;ui.pauseCover.classList.toggle('show',paused);$('pauseBtn').textContent=paused?'▶':'Ⅱ';last=performance.now()}
+$('soundBtn').addEventListener('click',()=>{sound=!sound;$('soundBtn').textContent=sound?'♫':'♪̸';if(sound)tone(710,.06,'sine')});
+function tone(freq,duration,type='square',vol=.03){if(!sound)return;try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const osc=audio.createOscillator(),gain=audio.createGain();osc.type=type;osc.frequency.value=freq;gain.gain.setValueAtTime(vol,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+duration);osc.connect(gain);gain.connect(audio.destination);osc.start();osc.stop(audio.currentTime+duration)}catch(_){}}
+let heldL=false,heldR=false,pointer=false;
+function movePointer(e){let r=canvas.getBoundingClientRect();player.targetX=clamp(e.clientX-r.left,32,W-32)}
+canvas.addEventListener('pointerdown',e=>{if(mode==='play'&&!paused){pointer=true;movePointer(e);canvas.setPointerCapture(e.pointerId)}});canvas.addEventListener('pointermove',e=>{if(pointer&&mode==='play'&&!paused)movePointer(e)});canvas.addEventListener('pointerup',()=>pointer=false);canvas.addEventListener('pointercancel',()=>pointer=false);
+window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight',' ','KeyP'].includes(e.code))e.preventDefault();if(e.code==='ArrowLeft')heldL=true;if(e.code==='ArrowRight')heldR=true;if(e.code==='KeyP'&&mode==='play')togglePause();if(e.code==='Space'&&mode==='menu')reset();});window.addEventListener('keyup',e=>{if(e.code==='ArrowLeft')heldL=false;if(e.code==='ArrowRight')heldR=false});
+function spawnEnemy(){let r=Math.random(),type=r<.54?'shambler':r<.78?'runner':r<.94?'bloater':'armored',boss=(wave%5===0&&waveSpawn===waveCount-1);if(boss)type='boss';let cfg={shambler:[48,40,16,'#94a48a',7],runner:[33,66,12,'#bac2a2',9],bloater:[105,30,22,'#9d9a69',15],armored:[135,27,21,'#657979',17],boss:[950,18,36,'#a46b64',150]}[type],scale=1+(wave-1)*.14,margin=type==='boss'?56:28;
+enemies.push({x:rand(margin,W-margin),y:rand(-82,-35),type,hp:cfg[0]*scale,maxHp:cfg[0]*scale,speed:cfg[1]*(1+(wave-1)*.037),r:cfg[2],color:cfg[3],reward:cfg[4],phase:rand(0,TAU),wiggle:rand(.5,1.1),lastX:0,hit:0,limb:rand(-.2,.2)});}
+function targetsAt(x,y,maxDist=550){let candidates=enemies.filter(e=>e.y<y-13&&y-e.y<maxDist&&e.hp>0);candidates.sort((a,b)=>Math.abs(a.x-x)*.93+Math.abs(y-a.y)*.16-(Math.abs(b.x-x)*.93+Math.abs(y-b.y)*.16));return candidates[0]||null}
+function fire(x,y,stats,owner='player',boost=1){let target=targetsAt(x,y);let ang=target?clamp(Math.atan2((target.x-x)*.7,Math.max(50,y-target.y)),-.32,.32):0;let spread=stats.spread||0,level=owner==='player'?weapon.level:1;for(let i=0;i<stats.pellets;i++){let theta=ang+(stats.pellets>1?(i/(stats.pellets-1)-.5)*spread*2:rand(-spread,spread));let s=stats.speed||780;bullets.push({x:x+Math.sin(theta)*19,y:y-28,vx:Math.sin(theta)*s,vy:-Math.cos(theta)*s,damage:stats.damage*(1+(level-1)*.27)*boost,r:stats.penetrate>1?4.7:stats.pellets>1?2.7:3.4,pen:stats.penetrate||0,hitIds:new Set(),color:stats.color||'#ffce98',life:1.3,owner})}burst(x,y-33,stats.color||'#f6e3b2',3,.29);if(Math.random()<.23)tone(stats.penetrate>1?190:115,.033,'sawtooth',.009)}
+function allyPos(i,t){let n=allies.length;let dx=(i-(n-1)/2)*47;let px=clamp(player.x+dx,20,W-20);let py=playerY+18+Math.abs(dx)*.13+Math.sin(t*3+allies[i].phase)*3;return{x:px,y:py}}
+function explosion(x,y,r,damage){burst(x,y,'#ff854e',35,2.3);shake=Math.max(shake,5);splats.push({x,y,r:rand(8,19),age:0,color:'#642429'});enemies.forEach(e=>{if(Math.hypot(e.x-x,e.y-y)<r)hurt(e,damage)});tone(95,.19,'sawtooth',.05)}
+function hurt(enemy,damage){if(enemy.hp<=0)return;enemy.hp-=damage;enemy.hit=.08;if(enemy.hp<=0)killEnemy(enemy)}
+function killEnemy(e){if(e.dead)return;e.dead=true;kills++;coins+=e.reward;shake=Math.max(shake,e.type==='boss'?10:1.6);splats.push({x:e.x,y:e.y,r:rand(12,25)*(e.type==='boss'?1.8:1),age:0,color:Math.random()<.85?'#70202c':'#4f2729'});if(splats.length>110)splats.shift();burst(e.x,e.y,'#b32c3b',e.type==='boss'?65:16,e.type==='boss'?2.7:1.0);if(Math.random()<.24)burst(e.x,e.y,'#8b9b7a',8,.7);if(Math.random()<.13||e.type==='boss')drops.push({x:e.x,y:e.y,r:12,spin:0,life:15});if(e.type==='boss'){coins+=180;toast('변이체 처치!','보너스 코인 +180 · 무기 상자 등장','#ffbc85')}tone(85,.055,'sawtooth',.017);}
+function burst(x,y,color,count=10,power=1){for(let i=0;i<count;i++){let a=rand(0,TAU),v=rand(15,140)*power;particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:rand(.2,.75)*power,max:1,r:rand(1,4.5)*Math.min(power,1.5),color,gravity:rand(45,145)})}if(particles.length>550)particles.splice(0,particles.length-550)}
+function update(dt){time+=dt;player.blink=Math.max(0,player.blink-dt);shake=Math.max(0,shake-dt*14);if(heldL)player.targetX-=270*dt;if(heldR)player.targetX+=270*dt;player.targetX=clamp(player.targetX,29,W-29);player.x+=(player.targetX-player.x)*Math.min(1,dt*14);
+if(nextWave>0){nextWave-=dt;if(nextWave<=0){wave++;waveCount=13+wave*5;waveSpawn=0;spawnClock=.5;hp=Math.min(100,hp+12);toast('웨이브 '+String(wave).padStart(2,'0'),'새로운 좀비 무리가 접근합니다. 체력 +12','#ff9ba2')}}else{spawnClock-=dt;if(waveSpawn<waveCount&&spawnClock<=0){spawnEnemy();waveSpawn++;spawnClock=Math.max(.24,1.12-wave*.05)*rand(.73,1.22)}if(waveSpawn>=waveCount&&enemies.length===0){nextWave=3.5;coins+=40+wave*12;toast('웨이브 '+wave+' 방어 성공','정비 보급 코인 +'+(40+wave*12),'#a8e4b4')}}
+const gun=WEAPONS[weapon.id];player.cooldown-=dt;if(player.cooldown<=0){fire(player.x,playerY,gun);player.cooldown=gun.rate}
+allies.forEach((a,i)=>{a.cooldown-=dt;let adef=ALLIES[a.id],p=allyPos(i,time);if(a.cooldown<=0){if(a.id==='medic'){hp=Math.min(100,hp+4);burst(p.x,p.y-25,'#8cffb7',7,.5)}else if(a.id==='pyro'){let tar=targetsAt(p.x,p.y);if(tar){explosion(tar.x,tar.y,58,adef.damage)}else fire(p.x,p.y,{pellets:1,rate:1,damage:adef.damage,spread:0,speed:590,color:adef.color})}else{fire(p.x,p.y,{pellets:1,damage:adef.damage,spread:a.id==='scout'?.035:0,speed:760,color:adef.color},'ally')}a.cooldown=adef.rate}});
+for(const e of enemies){if(e.dead)continue;e.hit=Math.max(0,e.hit-dt);e.y+=e.speed*dt;e.x=clamp(e.x+Math.sin(time*2.3+e.phase)*e.wiggle*dt*7+(player.x-e.x)*dt*.017,20,W-20);if(e.y>playerY+19){e.dead=true;hp-=e.type==='boss'?37:e.type==='bloater'?19:e.type==='runner'?9:13;player.blink=.23;shake=8;burst(e.x,playerY,'#f45563',18,1.1);tone(65,.19,'sawtooth',.06);if(hp<=0){hp=0;endGame();break;}}}
+enemies=enemies.filter(e=>!e.dead);
+for(let i=bullets.length-1;i>=0;i--){let b=bullets[i];b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;let consumed=false;for(let j=0;j<enemies.length;j++){let e=enemies[j];if(b.hitIds.has(e))continue;if(Math.hypot(e.x-b.x,e.y-7-b.y)<e.r*.75+b.r+3){b.hitIds.add(e);hurt(e,b.damage);burst(b.x,b.y,'#ff7785',3,.36);if(b.pen<=0){consumed=true;break}else b.pen--}}if(consumed||b.y< -30||b.x< -35||b.x>W+35||b.life<=0)bullets.splice(i,1)}
+for(let i=drops.length-1;i>=0;i--){let d=drops[i];d.y+=90*dt;d.spin+=dt*4;d.life-=dt;if(Math.hypot(d.x-player.x,d.y-playerY)<39||d.y>=playerY+25){if(Math.abs(d.x-player.x)<70){drops.splice(i,1);pickWeapon(true)}else if(d.y>playerY+25)drops.splice(i,1)}else if(d.life<=0)drops.splice(i,1)}
+for(let i=particles.length-1;i>=0;i--){let p=particles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=p.gravity*dt;p.vx*=.98;p.life-=dt;if(p.life<=0)particles.splice(i,1)}
+for(let s of splats)s.age+=dt;
+if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)ui.toast.classList.remove('show')}sync();}
+function endGame(){mode='over';ui.overlay.classList.remove('hidden');$('modalEyebrow').textContent='SURVIVOR STATUS : LOST';$('modalTitle').innerHTML='GAME<br><em>OVER</em>';$('modalSub').textContent='방어선이 무너졌습니다';$('modalStory').innerHTML=`<b>도달 웨이브:</b> ${wave}<br><b>총 처치:</b> ${kills}마리<br><b>획득 동료:</b> ${allies.length}명<br><b>생존 시간:</b> ${Math.floor(time/60)}분 ${Math.floor(time%60)}초<br><br>무기와 동료 조합을 바꿔 다시 도전하세요.`;$('startBtn').textContent='다시 도전 →';tone(72,.4,'sawtooth',.09)}
+function line(x1,y1,x2,y2,color,width=1){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()}
+function ellipse(x,y,rx,ry,color,rot=0){ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(x,y,rx,ry,rot,0,TAU);ctx.fill()}
+function rect(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(x,y,w,h)}
+function drawBG(){let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#10131a');g.addColorStop(.63,'#222027');g.addColorStop(1,'#0f1419');rect(0,0,W,H,g);
+rect(0,0,39,H,'#161b1f');rect(W-39,0,39,H,'#171a1d');line(39,0,39,H,'#494748',3);line(W-39,0,W-39,H,'#494748',3);
+for(let yy=(time*19)%85-85;yy<H;yy+=85){rect(18,yy,3,35,'#4a3839');rect(W-21,yy,3,35,'#4a3839')}let rg=ctx.createLinearGradient(0,0,W,0);rg.addColorStop(0,'rgba(80,50,52,.11)');rg.addColorStop(.5,'rgba(0,0,0,0)');rg.addColorStop(1,'rgba(80,50,52,.12)');rect(39,0,W-78,H,rg);
+ctx.globalAlpha=.22;for(let d of decor){ctx.save();ctx.translate(d.x,d.y);ctx.rotate(d.rotation);if(d.type===0){line(-d.size,0,d.size,0,'#696363',.8);line(0,-d.size/2,0,d.size/2,'#696363',.8)}else if(d.type===1){rect(-d.size,0,d.size*2,2,'#74605c')}else if(d.type===2){ellipse(0,0,d.size*.5,d.size*.17,'#594c48')}else{line(-d.size,-d.size,d.size,d.size,'#80736d',.9)}ctx.restore()}ctx.globalAlpha=1;
+for(let s of splats){ctx.globalAlpha=.42;ellipse(s.x,s.y,s.r,s.r*.64,s.color,s.r%2);for(let k=0;k<5;k++){let a=k*2.4+s.r;ellipse(s.x+Math.cos(a)*s.r*1.05,s.y+Math.sin(a)*s.r*.6,s.r*.16,s.r*.16,s.color)}ctx.globalAlpha=1}
+let fog=ctx.createLinearGradient(0,0,0,H*.45);fog.addColorStop(0,'rgba(180,36,52,.19)');fog.addColorStop(1,'rgba(180,36,52,0)');rect(39,0,W-78,H*.45,fog);
+const boundary=playerY+43;line(40,boundary,W-40,boundary,'rgba(240,70,80,.18)',2);ctx.setLineDash([14,9]);line(45,boundary,W-45,boundary,'rgba(234,80,88,.2)',2);ctx.setLineDash([]);
+}
+function drawEnemy(e){const x=e.x,y=e.y+(Math.sin(time*7+e.phase)*1.4),r=e.r,s=e.type==='boss'?1.58:e.type==='bloater'?1.24:e.type==='runner'?.83:1;ctx.save();ctx.translate(x,y);ctx.scale(s,s);let wobble=Math.sin(time*5+e.phase);ellipse(0,r*.73,r*.78,r*.3,'#06080aa0');
+// legs
+line(-6,8,-8+wobble*3,21,'#303d34',6);line(6,8,9-wobble*3,22,'#303d34',6);ellipse(-8+wobble*3,22,5,2.9,'#202b28');ellipse(9-wobble*3,22,5,2.9,'#202b28');
+// torso with torn clothes
+ctx.fillStyle=e.type==='armored'?'#3e5354':e.type==='bloater'?'#615d40':'#485448';ctx.beginPath();ctx.moveTo(-10,-7);ctx.lineTo(10,-7);ctx.lineTo(11,13);ctx.lineTo(3,14);ctx.lineTo(-4,10);ctx.lineTo(-10,15);ctx.closePath();ctx.fill();
+// bloody rips
+line(-5,0,2,5,'#792b34',3);line(2,6,6,0,'#a63e42',2);
+// arms
+line(-9,-4,-15+wobble*2,9,'#778a70',5);line(9,-5,16-wobble*2,11,'#728777',5);ellipse(-15+wobble*2,10,3,4,'#7c8977');ellipse(16-wobble*2,11,3,4,'#7c8977');
+// pale face: scar and one glowing eye
+ellipse(0,-14,10,11,e.hit>0?'#e9b3ac':e.color,-.1);ellipse(-4,-16,2.5,2,'#ee6f67');ellipse(4,-16,2.5,2,'#b9b273');line(-4,-8,6,-7,'#4e302f',2);line(1,-22,4,-17,'#6f333c',2);
+if(e.type==='bloater'){ellipse(0,7,14,13,'#77744b');ellipse(-3,4,4,4,'#a13f3d')}
+if(e.type==='armored'){rect(-9,-24,18,5,'#353c3e');line(-8,-2,8,7,'#8e6b59',3)}
+if(e.type==='boss'){ellipse(0,-29,12,9,'#6e3639');line(-10,-26,-18,-39,'#a78c74',4);line(10,-26,18,-39,'#a78c74',4);ellipse(0,4,7,11,'#933940')}
+ctx.restore();if(e.hp<e.maxHp||e.type==='boss'){let bw=(e.type==='boss'?76:35),yy=y-r*s-17;rect(x-bw/2,yy,bw,4,'#121317');rect(x-bw/2,yy,bw*clamp(e.hp/e.maxHp,0,1),4,e.type==='boss'?'#ff6475':'#a3c27c')}
+}
+function drawHuman(x,y,color,ally=false,phase=0){ctx.save();ctx.translate(x,y+Math.sin(time*4+phase)*.8);ellipse(0,21,16,5,'#020507a6');let s=ally?.79:1;ctx.scale(s,s);
+// legs / boots
+rect(-11,7,9,18,'#333a3d');rect(3,7,9,18,'#313438');rect(-12,21,11,6,'#101316');rect(3,21,12,6,'#131416');
+// belt and armor
+rect(-14,-10,28,23,ally?'#434b47':'#363e43');rect(-15,-9,30,5,color);rect(-11,-3,22,10,ally?'#555d58':'#535962');rect(-14,10,28,4,'#282e31');
+// bloody shoulder / sleeves
+ellipse(-15,-4,6,10,ally?'#5b655c':'#77565a',-.2);ellipse(15,-4,6,10,ally?'#56605f':'#6a484c',.2);
+// head and hair
+ellipse(0,-23,10,12,ally?'#c7a38e':'#d2b6a3');ellipse(0,-30,10,6,ally?'#394c48':'#2a292a');rect(-9,-25,18,5,ally?'#465856':'#2a292a');
+// visor and mask
+rect(-8,-24,16,5,ally?'#badabf':'#e3b87f');rect(-7,-16,14,5,'#484545');if(!ally){line(2,-15,8,-11,'#a22e3e',2)}
+// gun aimed up (from bottom to 12 o'clock)
+rect(-4,-42,8,29,ally?'#727d79':'#767c82');rect(-2,-49,4,12,'#21262b');rect(0,-44,1,9,'#e9cbb1');rect(-9,-13,6,13,'#c39c8b');rect(4,-13,6,13,'#b68c82');
+ctx.restore()}
+function drawDrop(d){let y=d.y+Math.sin(time*4+d.spin)*4;ctx.save();ctx.translate(d.x,y);ctx.rotate(Math.sin(d.spin)*.14);ctx.shadowColor='#ffd27a';ctx.shadowBlur=14;rect(-12,-11,24,21,'#6f5033');ctx.shadowBlur=0;ctx.strokeStyle='#ffcf85';ctx.lineWidth=2;ctx.strokeRect(-12,-11,24,21);rect(-3,-12,6,24,'#b88f51');rect(-12,-3,24,5,'#b88f51');ctx.fillStyle='#fff5d1';ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.fillText('?',0,6);ctx.restore()}
+function drawBullet(b){ctx.save();ctx.strokeStyle=b.color;ctx.lineWidth=b.r*1.5;ctx.shadowColor=b.color;ctx.shadowBlur=10;ctx.globalAlpha=.9;ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.lineTo(b.x-b.vx*.022,b.y-b.vy*.022);ctx.stroke();ctx.restore()}
+function drawParticles(){for(let p of particles){ctx.globalAlpha=clamp(p.life*2,0,1);ellipse(p.x,p.y,p.r,p.r*.67,p.color)}ctx.globalAlpha=1}
+function draw(){ctx.save();if(shake>0)ctx.translate(rand(-shake,shake),rand(-shake,shake));drawBG();for(let d of drops)drawDrop(d);for(let e of enemies)drawEnemy(e);for(let b of bullets)drawBullet(b);allies.forEach((a,i)=>{let p=allyPos(i,time);drawHuman(p.x,p.y,ALLIES[a.id].color,true,a.phase)});if(!(player.blink>0&&Math.floor(time*20)%2===0))drawHuman(player.x,playerY,'#9c3544');drawParticles();ctx.restore()}
+// Visual ambience while title screen is visible, without starting gameplay.
+function preview(dt){time+=dt*.4;if(enemies.length<7&&Math.random()<dt*1.4){let x=rand(55,W-55),y=rand(150,playerY-75);enemies.push({x,y,type:'shambler',hp:50,maxHp:50,speed:0,r:16,color:'#93a48d',reward:7,phase:rand(0,TAU),wiggle:1,hit:0})}for(let e of enemies){e.y+=Math.sin(time+e.phase)*dt*3}}
+function loop(now){let dt=Math.min(.043,(now-last)/1000||0);last=now;if(mode==='play'&&!paused)update(dt);else if(mode==='menu')preview(dt);draw();requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+})();
+</script>
+</body></html>
